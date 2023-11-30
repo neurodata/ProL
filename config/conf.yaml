@@ -1,0 +1,44 @@
+# This config file can be used for both run_exp.py and tune_alpha.py scripts 
+
+deploy: True # Store run in wandb in True
+exp: sinusoid-transformer  # Tag is used to determine logging-directory
+seed: 1996
+device: cuda:0
+
+dataset: periodic-switching
+net: pro-transformer
+
+# process params
+t: 1000
+N: 20
+
+# train params
+encoder_type: sinusoid
+batch_size: 64
+lr: 0.01
+epochs: 2000
+contextlength: 200 
+
+# eval params
+T: 4000
+num_reps: 10
+
+# Nested configs. Disable hydra logging
+defaults:
+  - _self_
+  - override hydra/job_logging: disabled
+  - override hydra/hydra_logging: disabled
+  - override hydra/launcher: joblib
+
+# Disable hydra directory structure
+hydra:
+  output_subdir: Null
+  run:
+    dir: .
+
+  sweep:
+    dir: .
+    subdir: .
+
+  launcher:
+    n_jobs: 10

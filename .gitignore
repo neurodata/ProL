@@ -5,3 +5,6 @@
 *.out
 *.synctex.*
 
+env
+exps
+wandb
