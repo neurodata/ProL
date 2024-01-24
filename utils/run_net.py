@@ -11,7 +11,7 @@ def train(cfg, model, trainloader):
 
     optimizer = torch.optim.SGD(
         model.parameters(), 
-        lr=cfg.lr, 
+        lr=cfg.train.lr, 
         momentum=0.9, 
         nesterov=True,
         weight_decay=1e-5
@@ -23,7 +23,7 @@ def train(cfg, model, trainloader):
     )
     criterion = nn.CrossEntropyLoss()
     
-    for epoch in range(cfg.epochs):
+    for epoch in range(cfg.train.epochs):
         model.train()
         nb_batches = len(trainloader)
         losses = 0.0
@@ -77,9 +77,9 @@ def evaluate(cfg, model, dataset, sample):
     truths = []
     model.eval()
 
-    for rep in range(cfg.num_reps):
+    for rep in range(cfg.eval.num_reps):
         np.random.seed(10*cfg.seed + 100*rep)
-        testdata = np.array([sample(s) for s in range(cfg.t, cfg.T)])
+        testdata = np.array([sample(s) for s in range(cfg.process.t, cfg.eval.T)])
         testdataset = TestDataset(testdata, dataset)
         testloader = DataLoader(testdataset, batch_size=100, shuffle=False)
 

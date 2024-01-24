@@ -34,9 +34,11 @@ def open_log(cfg, path):
         return fout
 
 
-def init_wandb(cfg, project_name):
+def init_wandb(cfg, project_name, run_name, use_run_id_as_name=False):
     if cfg.deploy:
-        wandb.init(project=project_name, name=f"exp-{cfg.exp}-t-{cfg.t}")
+        wandb.init(project=project_name, name=run_name)
+        if use_run_id_as_name:
+            wandb.run.name = wandb.run.id
         wandb.run.save()
         wandb.config.update(OmegaConf.to_container(cfg))
 

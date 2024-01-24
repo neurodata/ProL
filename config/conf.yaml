@@ -1,27 +1,40 @@
 # This config file can be used for both run_exp.py and tune_alpha.py scripts 
 
 deploy: True # Store run in wandb in True
-exp: sinusoid-transformer  # Tag is used to determine logging-directory
+exp: benchmark  # Tag is used to determine logging-directory
 seed: 1996
-device: cuda:0
+device: cuda:1
 
 dataset: periodic-switching
-net: pro-transformer
+architecture: pro-transformer
 
 # process params
-t: 1000
-N: 20
+process:
+  t: 1000   # training horizon
+  N: 20     # switching period (the task switches every N/2 times)
 
 # train params
-encoder_type: sinusoid
-batch_size: 64
-lr: 0.01
-epochs: 2000
-contextlength: 200 
+train:
+  batch_size: 64
+  lr: 0.01
+  epochs: 500
+
+# network params
+net:
+  aggregate_type: concat
+  encoder_type: fourier
+  d_model: 512
+  num_heads: 8
+  ff_hidden_dim: 2048
+  num_attn_blocks: 1
+  contextlength: 200 
+  max_len: 5000
+  C: 10000 # (for sinsoidal encoding)
 
 # eval params
-T: 4000
-num_reps: 10
+eval:
+  T: 4000
+  num_reps: 100
 
 # Nested configs. Disable hydra logging
 defaults:

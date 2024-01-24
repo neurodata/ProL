@@ -14,23 +14,17 @@ def get_data(cfg):
     if cfg.dataset == 'periodic-switching':
         from datahandlers.periodic_switching import PeriodicSwitchingDataset, sample
         dataset = PeriodicSwitchingDataset(cfg)
-        sample_from_process = lambda t : sample(t, cfg.N)
+        sample_from_process = lambda t : sample(t, cfg.process.N)
     else:
         raise NotImplementedError
     return dataset, sample_from_process
 
 def get_model(cfg):
-    if cfg.net == 'pro-transformer':
+    if cfg.architecture == 'pro-transformer':
         model = TransformerClassifier(
             cfg,
             input_size=1,
-            d_model=64, 
-            num_heads=4,
-            ff_hidden_dim=128,
-            num_attn_blocks=1,
-            num_classes=2, 
-            contextlength=cfg.contextlength,
-            C=100
+            num_classes=2
         )
     else:
         raise NotImplementedError
@@ -38,7 +32,8 @@ def get_model(cfg):
 
 @hydra.main(config_path="./config", config_name="conf.yaml")
 def main(cfg):
-    init_wandb(cfg, project_name="prol")
+    name = f"{cfg.exp}_t_{cfg.process.t}_posenc_{cfg.net.encoder_type}_aggr_{cfg.net.aggregate_type}"
+    init_wandb(cfg, project_name="prol", run_name=name)
 
     logs_path = f"exps/{cfg.exp}/logs/"
     models_path = f"exps/{cfg.exp}/models/"
@@ -51,10 +46,10 @@ def main(cfg):
     fp = open_log(cfg, logs_path)
 
     dataset, sample = get_data(cfg)
-    trainloader = DataLoader(dataset, batch_size=cfg.batch_size)
+    trainloader = DataLoader(dataset, batch_size=cfg.train.batch_size)
     model = get_model(cfg)
     model = train(cfg, model, trainloader)
-    torch.save(model, models_path + f"/model_t{cfg.t}.pt")
+    torch.save(model.state_dict(), models_path + f"/model_t{cfg.process.t}_posenc_{cfg.net.encoder_type}_aggr_{cfg.net.aggregate_type}.pt")
 
     preds, truths = evaluate(cfg, model, dataset, sample)
 
@@ -70,15 +65,19 @@ def main(cfg):
     }
     if cfg.deploy: 
         wandb.log(info)
-    cleanup(cfg, fp)
 
     info = {
-        "times": np.arange(cfg.t, cfg.T, 1).tolist(),
+        "times": np.arange(cfg.process.t, cfg.eval.T, 1).tolist(),
         "t_vs_avgerr": t_vs_avgerr.tolist(),
         "t_vs_stderr": t_vs_stderr.tolist(),
     }
     df = pd.DataFrame.from_dict(info)
-    df.to_csv(results_path + f"t{cfg.t}.csv")
+    tbl = wandb.Table(data=df)
+    if cfg.deploy: 
+        wandb.log({"results": tbl})
+    df.to_csv(results_path + f"t_{cfg.process.t}_posenc_{cfg.net.encoder_type}_aggr_{cfg.net.aggregate_type}.csv")
+
+    cleanup(cfg, fp)
 
 
 if __name__ == "__main__":
